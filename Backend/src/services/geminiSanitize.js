@@ -45,7 +45,6 @@ async function fetchGeminiGenerateContent({ apiKey, model, payload, debug }) {
   for (const v of versions) {
     const url = `https://generativelanguage.googleapis.com/${v}/models/${encodeURIComponent(normalizedModel)}:generateContent?key=${encodeURIComponent(apiKey)}`
 
-    // v1 rejects responseMimeType inside generationConfig; v1beta supports it.
     const payloadForVersion = structuredClone(payload)
     if (v === 'v1' && payloadForVersion?.generationConfig?.responseMimeType) {
       delete payloadForVersion.generationConfig.responseMimeType
@@ -76,10 +75,8 @@ async function fetchGeminiGenerateContent({ apiKey, model, payload, debug }) {
       console.log(`[gemini] http_error version=${v} status=${res.status} statusText=${res.statusText} body="${snippet}"`)
     }
 
-    // If model not found on this version, try the next version.
     if (res.status === 404) continue
 
-    // Otherwise fail fast (auth/permissions/etc.).
     break
   }
 

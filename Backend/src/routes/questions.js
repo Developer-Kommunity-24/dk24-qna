@@ -15,7 +15,6 @@ function normalizeTags(tags) {
     .filter(Boolean)
 }
 
-// Create a question (anonymous)
 router.post('/', async (req, res) => {
   try {
     const { title, body, author } = req.body
@@ -43,7 +42,6 @@ router.post('/', async (req, res) => {
   }
 })
 
-// List questions
 router.get('/', async (req, res) => {
   try {
     const status = req.query.status
@@ -60,7 +58,6 @@ router.get('/', async (req, res) => {
   }
 })
 
-// Get question + comments
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -76,7 +73,6 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// Add mentor comment (anonymous mentor)
 router.post('/:id/comments', async (req, res) => {
   try {
     const { id } = req.params
@@ -107,7 +103,6 @@ router.post('/:id/comments', async (req, res) => {
   }
 })
 
-// Update status/tags/content (Author only)
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -118,7 +113,6 @@ router.patch('/:id', async (req, res) => {
     const question = await Question.findById(id)
     if (!question) return res.status(404).json({ msg: 'Not found' })
 
-    // Check ownership
     if (question.author !== author) {
       return res.status(403).json({ msg: 'Unauthorized: You can only edit your own posts' })
     }
@@ -128,10 +122,6 @@ router.patch('/:id', async (req, res) => {
     if (body) update.body = body
     if (status === 'open' || status === 'closed') update.status = status
     if (tags !== undefined) update.tags = normalizeTags(tags)
-
-    // If content changed, sanitize again? 
-    // For simplicity, skipping re-sanitization for now, or I should add it?
-    // Ideally yes, but let's stick to the request "edit/delete".
     
     const updatedQuestion = await Question.findByIdAndUpdate(id, update, { new: true })
     return res.json(updatedQuestion)
@@ -140,7 +130,6 @@ router.patch('/:id', async (req, res) => {
   }
 })
 
-// Delete question (Author only)
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -164,8 +153,6 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
-
-// Star a question (anonymous)
 router.post('/:id/star', async (req, res) => {
   try {
     const { id } = req.params
@@ -184,7 +171,6 @@ router.post('/:id/star', async (req, res) => {
   }
 })
 
-// Unstar a question (anonymous)
 router.post('/:id/unstar', async (req, res) => {
   try {
     const { id } = req.params

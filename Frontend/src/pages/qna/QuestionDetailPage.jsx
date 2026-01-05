@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { addComment, deleteQuestion, getQuestion, starQuestion, unstarQuestion, updateQuestion } from '../../api.js'
 import { hasStarredQuestion, markQuestionStarred, unmarkQuestionStarred } from '../../utils/stars.js'
@@ -15,18 +15,17 @@ const QuestionDetailPage = () => {
   const [hasStarred, setHasStarred] = useState(() => hasStarredQuestion(id))
   const currentUser = getCookie('dk24_username')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setError('')
     const res = await getQuestion(id)
     setData(res)
     setTags((res.question.tags || []).join(', '))
-  }
+  }, [id])
 
   useEffect(() => {
     setHasStarred(hasStarredQuestion(id))
     load().catch(err => setError(err?.message || 'Failed to load'))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
+  }, [id, load])
 
   const onAddComment = async e => {
     e.preventDefault()

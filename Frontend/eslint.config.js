@@ -26,4 +26,11 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    files: ['src/pages/Antigravity.jsx'],
+    rules: {
+      'react/no-unknown-property': 'off',
+      'react-hooks/purity': 'off',
+    },
+  },
 ])

@@ -25,7 +25,6 @@ const LoginPage = () => {
       navigate('/', { replace: true })
     } catch (err) {
       console.error(err)
-      // Fallback if API fails
       setCookie('dk24_username', `User${Math.floor(Math.random() * 10000)}`, { days: 30 })
       navigate('/', { replace: true })
     } finally {

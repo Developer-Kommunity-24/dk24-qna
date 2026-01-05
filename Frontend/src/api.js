@@ -11,12 +11,8 @@ async function request(path, options) {
 
   if (!res.ok) {
     let message = `Request failed (${res.status})`
-    try {
-      const data = await res.json()
-      if (data?.msg) message = data.msg
-    } catch {
-      // ignore
-    }
+    const data = await res.json().catch(() => null)
+    if (data?.msg) message = data.msg
     throw new Error(message)
   }
 
