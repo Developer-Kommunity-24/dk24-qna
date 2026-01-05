@@ -52,3 +52,15 @@ export function updateQuestion(id, { status, tags }) {
     body: JSON.stringify({ status, tags })
   })
 }
+
+export function starQuestion(id) {
+  return request(`/api/questions/${encodeURIComponent(id)}/star`, {
+    method: 'POST'
+  })
+}
+
+export function unstarQuestion(id) {
+  return request(`/api/questions/${encodeURIComponent(id)}/unstar`, {
+    method: 'POST'
+  })
+}

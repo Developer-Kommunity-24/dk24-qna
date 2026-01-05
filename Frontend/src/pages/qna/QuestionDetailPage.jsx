@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { addComment, getQuestion, updateQuestion } from '../../api.js'
+import { addComment, getQuestion, starQuestion, unstarQuestion, updateQuestion } from '../../api.js'
+import { hasStarredQuestion, markQuestionStarred, unmarkQuestionStarred } from '../../utils/stars.js'
 
 const QuestionDetailPage = () => {
   const { id } = useParams()
@@ -9,6 +10,7 @@ const QuestionDetailPage = () => {
   const [comment, setComment] = useState('')
   const [tags, setTags] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [hasStarred, setHasStarred] = useState(() => hasStarredQuestion(id))
 
   const load = async () => {
     setError('')
@@ -18,6 +20,7 @@ const QuestionDetailPage = () => {
   }
 
   useEffect(() => {
+    setHasStarred(hasStarredQuestion(id))
     load().catch(err => setError(err?.message || 'Failed to load'))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
@@ -68,6 +71,27 @@ const QuestionDetailPage = () => {
     }
   }
 
+  const onToggleStar = async () => {
+    setIsSaving(true)
+    try {
+      const isStarred = hasStarredQuestion(id)
+      if (isStarred) {
+        await unstarQuestion(id)
+        unmarkQuestionStarred(id)
+        setHasStarred(false)
+      } else {
+        await starQuestion(id)
+        markQuestionStarred(id)
+        setHasStarred(true)
+      }
+      await load()
+    } catch (err) {
+      setError(err?.message || 'Failed to star')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (!data) {
     return (
       <div className="page">
@@ -83,6 +107,9 @@ const QuestionDetailPage = () => {
     <div className="page">
       <div className="row">
         <Link to="/">Back</Link>
+        <button type="button" onClick={onToggleStar} disabled={isSaving}>
+          {hasStarred ? 'Unstar' : 'Star'} ({question.stars || 0})
+        </button>
         <button type="button" onClick={onToggleStatus} disabled={isSaving}>
           {question.status === 'open' ? 'Close' : 'Reopen'}
         </button>
