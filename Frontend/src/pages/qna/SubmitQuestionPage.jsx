@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createQuestion } from '../../api.js'
+import { getCookie } from '../../utils/cookies.js'
 
 const SubmitQuestionPage = () => {
   const navigate = useNavigate()
@@ -23,7 +24,8 @@ const SubmitQuestionPage = () => {
 
     setIsSubmitting(true)
     try {
-      const created = await createQuestion({ title: trimmedTitle, body: trimmedBody, tags })
+      const author = getCookie('dk24_username') || 'Anonymous'
+      const created = await createQuestion({ title: trimmedTitle, body: trimmedBody, tags, author })
       navigate(`/questions/${created._id}`)
     } catch (err) {
       setError(err?.message || 'Failed to submit')

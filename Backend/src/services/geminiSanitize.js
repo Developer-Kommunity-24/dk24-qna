@@ -270,3 +270,33 @@ export async function sanitizeCommentDraft({ body }) {
     provider: result.provider
   }
 }
+
+export async function generateCreativeUsername() {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) return `User${Math.floor(Math.random() * 10000)}`
+
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const debug = isGeminiDebugEnabled()
+
+  const prompt = 'Generate a single creative, cool, anonymous username for a developer Q&A platform. It should be 1-3 words, no spaces (use CamelCase or underscores), and sound techy or sci-fi. Return ONLY the username string, nothing else.'
+
+  const payload = {
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.9,
+      maxOutputTokens: 20,
+      responseMimeType: 'text/plain'
+    }
+  }
+
+  const geminiResult = await fetchGeminiGenerateContent({ apiKey, model, payload, debug })
+  
+  if (!geminiResult.ok) {
+     return `User${Math.floor(Math.random() * 10000)}`
+  }
+  
+  const text = geminiResult.data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const username = text.trim().replace(/\s+/g, '')
+  return username || `User${Math.floor(Math.random() * 10000)}`
+}
+

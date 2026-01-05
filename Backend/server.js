@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./db.js";
 import questionsRouter from "./src/routes/questions.js";
+import authRouter from "./src/routes/auth.js";
 
 dotenv.config();
 connectDB();
@@ -25,6 +26,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/questions", questionsRouter);
+app.use("/api/auth", authRouter);
 
 app.use((req, res) => {
   res.status(200).json({ msg: "404 Not Found" });

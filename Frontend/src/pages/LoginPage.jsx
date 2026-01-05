@@ -1,12 +1,14 @@
 import Antigravity from './Antigravity.jsx';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { generateUsername } from '../api.js';
 import { getCookie, setCookie } from '../utils/cookies.js';
 
 
 const LoginPage = () => {
   const navigate = useNavigate()
   const [showRules, setShowRules] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const existing = getCookie('dk24_username')
@@ -14,10 +16,21 @@ const LoginPage = () => {
     else setShowRules(true)
   }, [navigate])
 
-  const onSubmit = e => {
+  const onSubmit = async e => {
     e.preventDefault()
-    setCookie('dk24_username', 'Anonymous', { days: 30 })
-    navigate('/', { replace: true })
+    setLoading(true)
+    try {
+      const { username } = await generateUsername()
+      setCookie('dk24_username', username, { days: 30 })
+      navigate('/', { replace: true })
+    } catch (err) {
+      console.error(err)
+      // Fallback if API fails
+      setCookie('dk24_username', `User${Math.floor(Math.random() * 10000)}`, { days: 30 })
+      navigate('/', { replace: true })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -56,7 +69,9 @@ const LoginPage = () => {
         )}
         <form className="loginForm" onSubmit={onSubmit}>
           <h1>Welcome to DK24</h1>
-          <button type="submit">Get Started</button>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Generating Identity...' : 'Get Started'}
+          </button>
         </form>
       </div>
     </div>

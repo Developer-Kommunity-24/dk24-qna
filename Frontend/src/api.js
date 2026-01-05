@@ -23,10 +23,14 @@ async function request(path, options) {
   return res.json()
 }
 
-export function createQuestion({ title, body, tags }) {
+export function generateUsername() {
+  return request('/api/auth/generate-username')
+}
+
+export function createQuestion({ title, body, tags, author }) {
   return request('/api/questions', {
     method: 'POST',
-    body: JSON.stringify({ title, body, tags })
+    body: JSON.stringify({ title, body, tags, author })
   })
 }
 
@@ -39,17 +43,24 @@ export function getQuestion(id) {
   return request(`/api/questions/${encodeURIComponent(id)}`)
 }
 
-export function addComment(id, { body }) {
+export function addComment(id, { body, author }) {
   return request(`/api/questions/${encodeURIComponent(id)}/comments`, {
     method: 'POST',
-    body: JSON.stringify({ body })
+    body: JSON.stringify({ body, author })
   })
 }
 
-export function updateQuestion(id, { status, tags }) {
+export function updateQuestion(id, { status, tags, title, body, author }) {
   return request(`/api/questions/${encodeURIComponent(id)}`, {
     method: 'PATCH',
-    body: JSON.stringify({ status, tags })
+    body: JSON.stringify({ status, tags, title, body, author })
+  })
+}
+
+export function deleteQuestion(id, { author }) {
+  return request(`/api/questions/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ author })
   })
 }
 

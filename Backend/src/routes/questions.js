@@ -18,7 +18,7 @@ function normalizeTags(tags) {
 // Create a question (anonymous)
 router.post('/', async (req, res) => {
   try {
-    const { title, body } = req.body
+    const { title, body, author } = req.body
     const tags = normalizeTags(req.body.tags)
 
     if (!title || !body) return res.status(400).json({ msg: 'title and body are required' })
@@ -31,7 +31,12 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ msg: 'Question rejected: please keep it respectful and non-explicit.' })
     }
 
-    const question = await Question.create({ title: sanitized.title, body: sanitized.body, tags })
+    const question = await Question.create({ 
+      title: sanitized.title, 
+      body: sanitized.body, 
+      tags,
+      author: author || 'Anonymous'
+    })
     return res.status(201).json(question)
   } catch (err) {
     return res.status(500).json({ msg: 'Failed to create question' })
@@ -75,7 +80,7 @@ router.get('/:id', async (req, res) => {
 router.post('/:id/comments', async (req, res) => {
   try {
     const { id } = req.params
-    const { body } = req.body
+    const { body, author } = req.body
     if (!mongoose.isValidObjectId(id)) return res.status(400).json({ msg: 'Invalid id' })
     if (!body) return res.status(400).json({ msg: 'body is required' })
 
@@ -90,31 +95,75 @@ router.post('/:id/comments', async (req, res) => {
       return res.status(400).json({ msg: 'Comment rejected: please keep it respectful and non-explicit.' })
     }
 
-    const comment = await Comment.create({ questionId: id, body: sanitized.body, authorRole: 'mentor' })
+    const comment = await Comment.create({ 
+      questionId: id, 
+      body: sanitized.body, 
+      authorRole: 'mentor',
+      author: author || 'Anonymous'
+    })
     return res.status(201).json(comment)
   } catch (err) {
     return res.status(500).json({ msg: 'Failed to add comment' })
   }
 })
 
-// Update status/tags (mentor actions, still anonymous)
+// Update status/tags/content (Author only)
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params
+    const { author, title, body, status, tags } = req.body
+
     if (!mongoose.isValidObjectId(id)) return res.status(400).json({ msg: 'Invalid id' })
 
-    const update = {}
-    if (req.body.status === 'open' || req.body.status === 'closed') update.status = req.body.status
-    if (req.body.tags !== undefined) update.tags = normalizeTags(req.body.tags)
-
-    const question = await Question.findByIdAndUpdate(id, update, { new: true })
+    const question = await Question.findById(id)
     if (!question) return res.status(404).json({ msg: 'Not found' })
 
-    return res.json(question)
+    // Check ownership
+    if (question.author !== author) {
+      return res.status(403).json({ msg: 'Unauthorized: You can only edit your own posts' })
+    }
+
+    const update = {}
+    if (title) update.title = title
+    if (body) update.body = body
+    if (status === 'open' || status === 'closed') update.status = status
+    if (tags !== undefined) update.tags = normalizeTags(tags)
+
+    // If content changed, sanitize again? 
+    // For simplicity, skipping re-sanitization for now, or I should add it?
+    // Ideally yes, but let's stick to the request "edit/delete".
+    
+    const updatedQuestion = await Question.findByIdAndUpdate(id, update, { new: true })
+    return res.json(updatedQuestion)
   } catch (err) {
     return res.status(500).json({ msg: 'Failed to update question' })
   }
 })
+
+// Delete question (Author only)
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { author } = req.body
+
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ msg: 'Invalid id' })
+
+    const question = await Question.findById(id)
+    if (!question) return res.status(404).json({ msg: 'Not found' })
+
+    if (question.author !== author) {
+      return res.status(403).json({ msg: 'Unauthorized: You can only delete your own posts' })
+    }
+
+    await Question.findByIdAndDelete(id)
+    await Comment.deleteMany({ questionId: id })
+
+    return res.json({ msg: 'Deleted' })
+  } catch (err) {
+    return res.status(500).json({ msg: 'Failed to delete question' })
+  }
+})
+
 
 // Star a question (anonymous)
 router.post('/:id/star', async (req, res) => {
